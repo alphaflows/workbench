@@ -47,7 +47,7 @@ flowchart TD
     A[Start] --> B[Use renew_task to extend task's duration]
     B --> C[Use get_deployment_info to follow up task's status]
     C --> D[Check task's duration updated]
-    E --> G[End]
+    D --> G[End]
 ```
 
 ### 3. Terminating a Task
