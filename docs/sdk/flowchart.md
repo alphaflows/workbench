@@ -1,20 +1,30 @@
 
 Steps using SDK:
 
+To deploy task:
+
 - user get API-Key
 - user use API-Key to login in Orchestrator using SDK
 - get a list of instance resources
 - choose an instance type
-- use `create_task` to deploy task (auto_pay=True) or to only initialize task (auto_pay=False)
+- use `create_task` to deploy task
 - use `get_deployment_info` to follow up task's status
 - use `get_real_url` to get APP URLs and to check if APP is running
+
+To renew task:
+
 - use `renew_task` to extend task's duration
-- still use `get_deployment_info` to follow up task's status
-- or use `terminate_task` to early terminate a task
-- still use `get_deployment_info` to follow up task's status
-- if task is only initialized, use `make_payment` to do payment and deploy task
+- use `get_deployment_info` to follow up task's status
+- to check `duration` is updated
+
+To terminate task:
+
+- use `terminate_task` to early terminate a task
+- use `get_deployment_info` to follow up task's status
+- to check task status is updated to `terminated`
 
 
+### 1. Deploying a Task
 
 ```mermaid
 flowchart TD
@@ -22,23 +32,34 @@ flowchart TD
     B --> C[User logs in to Orchestrator using SDK with API-Key]
     C --> D[Get list of instance resources]
     D --> E[Choose an instance type]
-    E --> F{Auto-pay?}
-    F -->|Yes| G[Use create_task to deploy task]
-    F -->|No| H[Use create_task to initialize task]
-    G --> I[Use get_deployment_info to follow up task's status]
-    H --> I
-    I --> J[Use get_real_url to get APP URLs and check if APP is running]
-    J --> K{Extend duration?}
-    K -->|Yes| L[Use renew_task to extend task's duration]
-    L --> M[Use get_deployment_info to follow up task's status]
-    K -->|No| N{Terminate early?}
-    N -->|Yes| O[Use terminate_task to end task]
-    O --> P[Use get_deployment_info to follow up task's status]
-    N -->|No| Q{Task only initialized?}
-    Q -->|Yes| R[Use make_payment to do payment and deploy task]
-    R --> S[Use get_deployment_info to follow up task's status]
-    Q -->|No| T[End]
-    M --> N
-    P --> T
-    S --> T
+    E --> F[Use create_task to deploy task]
+    F --> G[Use get_deployment_info to follow up task's status]
+    G --> H[Use get_real_url to get APP URLs and check if APP is running]
+    H --> I[End]
+```
+
+### 2. Renewing a Task
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Use renew_task to extend task's duration]
+    B --> C[Use get_deployment_info to follow up task's status]
+    C --> D{Is duration updated?}
+    D -->|Yes| E[Task successfully renewed]
+    D -->|No| F[Check for errors or retry]
+    E --> G[End]
+    F --> G
+```
+
+### 3. Terminating a Task
+
+```mermaid
+flowchart TD
+    A[Start] --> B[Use terminate_task to early terminate a task]
+    B --> C[Use get_deployment_info to follow up task's status]
+    C --> D{Is status 'terminated'?}
+    D -->|Yes| E[Task successfully terminated]
+    D -->|No| F[Check for errors or retry]
+    E --> G[End]
+    F --> G
 ```
