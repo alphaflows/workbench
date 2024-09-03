@@ -1,5 +1,7 @@
 
-Steps using SDK:
+# Steps using SDK
+
+## Main Logic
 
 To deploy task:
 
@@ -44,11 +46,8 @@ flowchart TD
 flowchart TD
     A[Start] --> B[Use renew_task to extend task's duration]
     B --> C[Use get_deployment_info to follow up task's status]
-    C --> D{Is duration updated?}
-    D -->|Yes| E[Task successfully renewed]
-    D -->|No| F[Check for errors or retry]
+    C --> D[Check task's duration updated]
     E --> G[End]
-    F --> G
 ```
 
 ### 3. Terminating a Task
@@ -57,9 +56,6 @@ flowchart TD
 flowchart TD
     A[Start] --> B[Use terminate_task to early terminate a task]
     B --> C[Use get_deployment_info to follow up task's status]
-    C --> D{Is status 'terminated'?}
-    D -->|Yes| E[Task successfully terminated]
-    D -->|No| F[Check for errors or retry]
-    E --> G[End]
-    F --> G
+    C --> D[Check task status is 'terminated']
+    D --> G[End]
 ```
