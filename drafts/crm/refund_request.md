@@ -121,7 +121,7 @@ CREATE TABLE `refund_record` (
     `task_uuid` varchar(64) NOT NULL,
     `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
     `cp_list` json,
-    `slash_amount_each` int DEFAULT NULL,
+    `slash_amount_each` double DEFAULT NULL,
     `created_at` int DEFAULT NULL,
     `updated_at` int DEFAULT NULL,
     PRIMARY KEY (`id`)
