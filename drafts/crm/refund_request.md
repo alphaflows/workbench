@@ -10,6 +10,7 @@
        - Store picture URLs in the database.  
        - Save the description.  
        - Set request status to `created`.
+       - Call **API: eligibility checking** (Orchestrator) to check if task is eligible for refund (in cooling down window)
        - Call **API: suspend task** (Orchestrator) to stop task being completed automatically
          - change task status to `suspended`
 
@@ -44,6 +45,7 @@ flowchart TD
     A[Start] --> B[User initiates refund request]
     B --> C[Upload screenshots and add description]
     C --> D[API: request_refund]
+    D --> M[API: eligibility checking]
     D --> E[Upload pics to MCS]
     E --> F[Store pic URLs in DB]
     F --> G[Set request status: 'created']
@@ -82,6 +84,7 @@ TODO:
 - **API: get list of refund requests**  (CRM)
 - **API: process request** (CRM)
 - **API: orchestrator create signature and call contract API to refund** (Orchestrator)
+- **API: eligibility checking** (Orchestrator)
 - **API: suspend task** (Orchestrator)
 - **API: resume task** (Orchestrator)
 
@@ -118,7 +121,7 @@ CREATE TABLE `refund_record` (
     `task_uuid` varchar(64) NOT NULL,
     `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
     `cp_list` json,
-    `slash_amount` json,
+    `slash_amount_each` int DEFAULT NULL,
     `created_at` int DEFAULT NULL,
     `updated_at` int DEFAULT NULL,
     PRIMARY KEY (`id`)
