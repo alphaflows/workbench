@@ -10,6 +10,8 @@
        - Store picture URLs in the database.  
        - Save the description.  
        - Set request status to `created`.
+       - Call **API: suspend task** (Orchestrator) to stop task being completed automatically
+         - change task status to `suspended`
 
 2. **Step 2: BD Get a List of Requests**  
    - **Process**:  
@@ -24,9 +26,16 @@
    - Call **API: process request** (CRM)
    - **If Approveed**:  
      - Call **API: orchestrator create signature and call contract API to refund** (Orchestrator)
-     - Update refund request status to `approveed` in CRM.  
+       - Change task status to `Refunded` and jobs status to `Refunded` 
+       - Generate signature for user to claim refund
+       - Get task collateral amount from task manager contract
+       - Slash CP by amount
+     - Update refund request status to `approveed` in CRM.
+     - Return signature to user for claim refund by himself.
    - **If Declined**:  
      - Update refund request status to `declined` in CRM.
+     - Call **API: resume task** (Orchestrator) to let task being processed forward
+       - If necessary (task has passed cooling down period), call `completeTask` on contract
 
 ### Part 1: User Flow
 
@@ -38,6 +47,7 @@ flowchart TD
     D --> E[Upload pics to MCS]
     E --> F[Store pic URLs in DB]
     F --> G[Set request status: 'created']
+    G --> H[API: Suspend task]
 ```
 
 ### Part 2: BD Team Flow
@@ -51,11 +61,14 @@ flowchart TD
     L -->|Yes| M[Show approve/decline buttons]
     M --> N{Approve or Decline?}
     N -->|Approve| O[API: process request]
-    O --> P[API: orchestrator create signature and call contract API]
-    P --> Q[Update status to 'Approveed']
-    N -->|Decline| R[Update status to 'declined']
-    Q --> S[End]
-    R --> S
+    O --> P[API: orchestrator create signature and slash CP]
+    P --> W{Get signature?}
+    W --> |Yes| Q[Update status to 'Approveed']
+    W --> |No| S[End]
+    N -->|Decline| R[API: Resume task]
+    R --> T[Update status to 'declined']
+    Q --> S
+    T --> S
     L -->|No| S
 ```
 
@@ -69,24 +82,45 @@ TODO:
 - **API: get list of refund requests**  (CRM)
 - **API: process request** (CRM)
 - **API: orchestrator create signature and call contract API to refund** (Orchestrator)
+- **API: suspend task** (Orchestrator)
+- **API: resume task** (Orchestrator)
 
-### `refund_request` Table
+### `refund_request` Table (in CRM)
 
 ```sql
-CREATE TABLE refund_request (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_name VARCHAR(255) NOT NULL COMMENT 'Name of the user requesting the refund',
-    user_wallet VARCHAR(255) NOT NULL COMMENT 'Wallet address of the user',
-    user_email VARCHAR(255) NOT NULL COMMENT 'Email address of the user',
-    user_phone VARCHAR(20) COMMENT 'Phone number of the user (optional)',
-    request_pics JSON COMMENT 'JSON array of URLs for refund request pictures',
-    request_desc TEXT COMMENT 'Detailed description of the refund request',
-    status ENUM('created', 'approved', 'declined') NOT NULL DEFAULT 'created',
-    refund_txhash VARCHAR(255) COMMENT 'Transaction hash of the refund (if approved)',
-    process_memo TEXT COMMENT 'Admin comments or notes on the refund process',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE `refund_request` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `user_name` varchar(255) NOT NULL COMMENT 'Name of the user requesting the refund',
+    `user_wallet` varchar(255) NOT NULL COMMENT 'Wallet address of the user',
+    `user_email` varchar(255) NOT NULL COMMENT 'Email address of the user',
+    `user_phone` varchar(20) DEFAULT NULL COMMENT 'Phone number of the user (optional)',
+    `task_uuid` varchar(64) NOT NULL COMMENT 'UUID of task associated with the refund request',
+    `request_pics` json DEFAULT NULL COMMENT 'JSON array of URLs for refund request pictures',
+    `request_desc` text COMMENT 'Detailed description of the refund request',
+    `status` varchar(64) NOT NULL,
+    `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
+    `process_comments` text COMMENT 'Admin comments or notes on the refund process',
+    `created_at` int DEFAULT NULL,
+    `processed_at` int DEFAULT NULL,
+    `updated_at` int DEFAULT NULL,
+    `deleted_at` int DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+```
+
+
+### `refund_record` Table (in Orchestrator)
+
+
+```sql
+CREATE TABLE `refund_record` (
+    `id` int NOT NULL AUTO_INCREMENT,
+    `task_uuid` varchar(64) NOT NULL,
+    `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
+    `cp_list` json,
+    `slash_amount` json,
+    `created_at` int DEFAULT NULL,
+    `updated_at` int DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 ```
