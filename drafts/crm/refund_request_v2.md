@@ -44,7 +44,7 @@ graph TD
 - Orchestrator generate signature for refund
 - Slash CP by it's collateral * 5 (5 times penalty)
 - Save refund request for CP in `refund_process` table (`job_uuid`, `cp_account_address`, slashed_amount, task_uuid, timestamp, etc)
-- if task has been completed, claim back CP's reward (call `reclaimReward(task_uuid, cp_account_address)`)
+- if task has been completed, **claim back CP's reward** (call `reclaimReward(task_uuid, cp_account_address)`)
 - if task has not been completed yet, when complete task, don't release reward for this CP; when complete task later, call `completeTask(task_uuid, cp_address_list)` to exclude this CP
 
 
