@@ -56,7 +56,6 @@ graph TD
     D --> E{Task completed?}
     E -->|Yes| F[Claim back CP's reward]
     E -->|No| G[When task completes later]
-    G --> H[Don't release reward for this CP]
-    G --> I[Call completeTask to exclude this CP]
+    G --> H[Don't release reward for this CP; Call completeTask to exclude this CP]
 ```
 
