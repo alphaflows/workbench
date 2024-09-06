@@ -67,6 +67,7 @@ graph TD
 ```sql
 CREATE TABLE `refund_request` (
     `id` int NOT NULL AUTO_INCREMENT,
+    `copper_id` int NOT NULL,
     `user_email` varchar(255) DEFAULT NULL COMMENT 'Email address of the user',
     `user_wallet` varchar(255) NOT NULL COMMENT 'Wallet address of the user',
     `task_uuid` varchar(64) NOT NULL COMMENT 'UUID of task associated with the refund request',
@@ -76,7 +77,7 @@ CREATE TABLE `refund_request` (
     `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
     `created_at` int DEFAULT NULL,
     `processed_at` int DEFAULT NULL,
-    `updated_at` int DEFAULT NULL,
+    `completed_at` int DEFAULT NULL,
     `deleted_at` int DEFAULT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
