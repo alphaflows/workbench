@@ -95,7 +95,10 @@ CREATE TABLE `refund_record` (
     `user_wallet` varchar(255) NOT NULL,
     `cp_account_address` varchar(255) NOT NULL,
     `refund_signature` varchar(255) DEFAULT NULL,
+    `task_status` varchar(45) DEFAULT NULL,
+    `job_status` varchar(45) DEFAULT NULL,
     `slash_amount` double DEFAULT NULL,
+    `reclaim_reward` double DEFAULT NULL,
     `created_at` int DEFAULT NULL,
     `updated_at` int DEFAULT NULL,
     PRIMARY KEY (`id`)
