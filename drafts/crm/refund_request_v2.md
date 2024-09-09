@@ -79,6 +79,7 @@ CREATE TABLE `refund_request` (
     `processed_at` int DEFAULT NULL,
     `completed_at` int DEFAULT NULL,
     `deleted_at` int DEFAULT NULL,
+    `comments` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 ```
