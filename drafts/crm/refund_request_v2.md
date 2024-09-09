@@ -100,8 +100,10 @@ CREATE TABLE `refund_record` (
     `job_status` varchar(45) DEFAULT NULL,
     `slash_amount` double DEFAULT NULL,
     `reclaim_reward` double DEFAULT NULL,
+    `status` varchar(45) DEFAULT NULL COMMENT 'status for refund process itself',
     `created_at` int DEFAULT NULL,
     `updated_at` int DEFAULT NULL,
+    `comments` varchar(255) DEFAULT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 ```
