@@ -32,12 +32,18 @@ graph TD
 
 ```mermaid
 graph TD
-    A[CRM backend scans copper API] --> B[Get 'Refund Accepted' requests]
+    O[Start] --> A[CRM backend scans copper API] 
+    A --> B[Get 'Refund Accepted' requests]
     B --> C[For each refund request]
-    C --> G[change stage to `Refund in Process` via copper API]
+    C --> G[change stage to 'Refund in Process' via copper API]
     G --> D[Call Orchestrator API to process refund]
-    D --> E[Get signature from Orchestrator API]
+    D --> H{Refund processed?}
+    H --> |Yes| E[Get signature from Orchestrator API]
+    H --> |No| S[Get error message from Orchestrator API]
     E --> F[Send signature and change stage to 'Refund Complete' in copper pipeline]
+    S --> I[Send error message and change stage to 'Refund Reject' in copper pipeline]
+    F --> Q[End]
+    I --> Q
 ```
 
 ## Orchestrator process refund logic
@@ -52,14 +58,33 @@ graph TD
 
 ```mermaid
 graph TD
-    A[Orchestrator receives refund request from CRM] --> B[Generate signature for refund]
+    O[Start] --> A[Orchestrator receives refund request from CRM] 
+    A --> M{Job eligible for refund?}
+    M --> |Yes| B[Generate signature for refund]
+    M --> |No| N[Return refund failed message]
     B --> C[Slash CP by collateral * 5]
-    C --> D[Save refund request in 'refund_record' table]
-    D --> E{Task completed?}
+    C --> E{Task completed?}
     E -->|Yes| F[Claim back CP's reward]
-    E -->|No| G[When task completes later]
-    G --> H[Don't release reward for this CP; Call completeTask to exclude this CP]
+    E -->|No| G[This CP will be excluded from complete task logic]
+    F --> D[Save refund record]
+    G --> D
+    D --> P[Return refund signature and success info]
+    P --> Q[End]
+    N --> Q
 ```
+
+### Failed refund cases
+
+- `{job_uuid=} refund record already exists`
+- `Task not found, no action taken`
+- `Task is terminated, not eligible for refund`
+- `Job not found, no action taken`
+- `Job not ended, not eligible for refund`
+- `Job cp_account_address not match, no action taken`
+- `CP not found, no action taken`
+- `Wallet not match, no action taken`
+- `no cp in task, no action taken` (get info from contract, very rare)
+- `Failed to process refund for user...` (slash failed contract, will retry)
 
 
 ### `refund_request` Table (in CRM)
@@ -76,6 +101,7 @@ CREATE TABLE `refund_request` (
     `stage` varchar(64) DEFAULT NULL,
     `refund_signature` varchar(255) DEFAULT NULL COMMENT 'Signature for refund (if approved)',
     `created_at` int DEFAULT NULL,
+    `updated_at` int DEFAULT NULL,
     `processed_at` int DEFAULT NULL,
     `completed_at` int DEFAULT NULL,
     `deleted_at` int DEFAULT NULL,
@@ -95,11 +121,13 @@ CREATE TABLE `refund_record` (
     `job_uuid` varchar(64) NOT NULL,
     `user_wallet` varchar(255) NOT NULL,
     `cp_account_address` varchar(255) NOT NULL,
+    `owner_address` varchar(255) NOT NULL,
     `refund_signature` varchar(255) DEFAULT NULL,
     `task_status` varchar(45) DEFAULT NULL,
     `job_status` varchar(45) DEFAULT NULL,
     `slash_amount` double DEFAULT NULL,
     `reclaim_reward` double DEFAULT NULL,
+    `tx_hash` varchar(255) NOT NULL COMMENT 'txhash for slash',
     `status` varchar(45) DEFAULT NULL COMMENT 'status for refund process itself',
     `created_at` int DEFAULT NULL,
     `updated_at` int DEFAULT NULL,
